@@ -6,6 +6,8 @@ from ai_customer_support_agent.tools.database_tools import DATABASE_TOOLS
 
 from ai_customer_support_agent.tools.knowledge_tools import search_company_knowledge
 
+
+from langgraph.checkpoint.memory import InMemorySaver
 load_dotenv()
 
 model=ChatOpenAI(
@@ -47,6 +49,9 @@ If the available information is insufficient, say so clearly.
 Be concise, helpful, and professional.
 """
 
+
+checkpointer=InMemorySaver()
+
 ALL_TOOLS = [
     *DATABASE_TOOLS,
     search_company_knowledge,
@@ -56,7 +61,8 @@ ALL_TOOLS = [
 agent=create_agent(
     model=model,
     tools=ALL_TOOLS,
-    system_prompt=SYSTEM_PROMPT
+    system_prompt=SYSTEM_PROMPT,
+    checkpointer=checkpointer
 )
 
 if __name__ == "__main__":

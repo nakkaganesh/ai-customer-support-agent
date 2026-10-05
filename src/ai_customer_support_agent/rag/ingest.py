@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -5,6 +6,8 @@ from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from pinecone import Pinecone
+
 
 load_dotenv()
 
@@ -39,6 +42,21 @@ def split_documents(
     return splitter.split_documents(documents)
 
 
+def clear_vectorstore():
+    api_key = os.getenv("PINECONE_API_KEY")
+
+    if not api_key:
+        raise ValueError(
+            "PINECONE_API_KEY is not configured in .env"
+        )
+
+    pc = Pinecone(api_key=api_key)
+    index = pc.Index(INDEX_NAME)
+
+    print("Clearing old vectors from Pinecone...")
+    index.delete(delete_all=True)
+
+
 def ingest_documents():
     documents = load_documents()
 
@@ -52,6 +70,8 @@ def ingest_documents():
     print(f"Loaded documents: {len(documents)}")
     print(f"Created chunks: {len(chunks)}")
 
+    clear_vectorstore()
+
     embeddings = OpenAIEmbeddings(
         model="text-embedding-3-small"
     )
@@ -62,7 +82,7 @@ def ingest_documents():
         index_name=INDEX_NAME,
     )
 
-    print("Documents uploaded to Pinecone successfully.")
+    print("Knowledge base rebuilt successfully.")
 
 
 if __name__ == "__main__":

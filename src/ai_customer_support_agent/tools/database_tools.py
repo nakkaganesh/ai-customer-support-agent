@@ -5,6 +5,7 @@ from ai_customer_support_agent.db.repositories import (
     get_order_by_order_id,
     get_product_by_product_id,
     get_tickets_by_customer_id,
+    create_support_ticket
 )
 
 
@@ -68,9 +69,51 @@ def lookup_customer_tickets(customer_id: str) -> list[dict]:
     return get_tickets_by_customer_id(customer_id)
 
 
+@tool
+def create_ticket(
+    customer_id: str,
+    subject: str,
+    description: str,
+    priority: str = "medium",
+) -> dict:
+    """Create a new customer support ticket.
+
+    Use this tool only when the user explicitly asks to create,
+    open, or raise a support ticket.
+
+    Valid priorities are low, medium, and high.
+    """
+
+    allowed_priorities = {"low", "medium", "high"}
+
+    priority = priority.lower()
+
+    if priority not in allowed_priorities:
+        return {
+            "error": (
+                "Invalid priority. "
+                "Priority must be low, medium, or high."
+            )
+        }
+
+    result = create_support_ticket(
+        customer_id=customer_id,
+        subject=subject,
+        description=description,
+        priority=priority,
+    )
+
+    if result is None:
+        return {
+            "error": f"Customer {customer_id} was not found."
+        }
+
+    return result
+
 DATABASE_TOOLS = [
     lookup_order,
     lookup_customer,
     lookup_product,
     lookup_customer_tickets,
+    create_ticket
 ]

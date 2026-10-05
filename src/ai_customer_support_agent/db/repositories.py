@@ -102,3 +102,50 @@ def get_tickets_by_customer_id(customer_id: str) -> list[dict]:
             }
             for ticket in tickets
         ]
+
+
+def create_support_ticket(
+    customer_id: str,
+    subject: str,
+    description: str,
+    priority: str = "medium",
+) -> dict | None:
+    with SessionLocal() as session:
+        customer = session.scalar(
+            select(Customer).where(
+                Customer.customer_id == customer_id
+            )
+        )
+
+        if customer is None:
+            return None
+
+        ticket_count = len(
+            session.scalars(
+                select(SupportTicket)
+            ).all()
+        )
+
+        ticket_id = f"TKT-{ticket_count + 1:03d}"
+
+        ticket = SupportTicket(
+            ticket_id=ticket_id,
+            customer_id=customer.id,
+            subject=subject,
+            description=description,
+            status="open",
+            priority=priority,
+        )
+
+        session.add(ticket)
+        session.commit()
+        session.refresh(ticket)
+
+        return {
+            "ticket_id": ticket.ticket_id,
+            "customer_id": customer.customer_id,
+            "subject": ticket.subject,
+            "description": ticket.description,
+            "status": ticket.status,
+            "priority": ticket.priority,
+        }

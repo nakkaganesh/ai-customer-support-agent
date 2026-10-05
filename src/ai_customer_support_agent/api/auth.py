@@ -9,8 +9,13 @@ load_dotenv()
 
 
 def get_authenticated_customer(
-    x_api_key: str = Header(..., alias="X-API-Key"),
+    x_api_key: str | None = Header(None, alias="X-API-Key"),
 ) -> str:
+    if not x_api_key:
+     raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="API key is required.",
+    )
     api_key_map = {
         os.getenv("CUSTOMER_001_API_KEY"): "CUST-001",
         os.getenv("CUSTOMER_002_API_KEY"): "CUST-002",

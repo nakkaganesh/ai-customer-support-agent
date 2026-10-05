@@ -149,3 +149,35 @@ def create_support_ticket(
             "status": ticket.status,
             "priority": ticket.priority,
         }
+
+def get_order_for_customer(
+    order_id: str,
+    customer_id: str,
+) -> dict | None:
+    with SessionLocal() as session:
+        statement = (
+            select(Order)
+            .join(Customer)
+            .where(
+                Order.order_id == order_id,
+                Customer.customer_id == customer_id,
+            )
+            .options(
+                selectinload(Order.customer),
+                selectinload(Order.items),
+            )
+        )
+
+        order = session.scalar(statement)
+
+        if order is None:
+            return None
+
+        return {
+            "order_id": order.order_id,
+            "customer": order.customer.name,
+            "status": order.status,
+            "tracking_number": order.tracking_number,
+            "total_amount": float(order.total_amount),
+            "ordered_at": order.ordered_at.isoformat(),
+        }

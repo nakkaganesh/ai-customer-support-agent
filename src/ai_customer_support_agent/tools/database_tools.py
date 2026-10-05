@@ -5,38 +5,64 @@ from ai_customer_support_agent.db.repositories import (
     get_order_by_order_id,
     get_product_by_product_id,
     get_tickets_by_customer_id,
-    create_support_ticket
+    create_support_ticket,get_order_for_customer
 )
+from ai_customer_support_agent.core.context import (
+    get_current_customer_id,
+)
+
 
 
 @tool
 def lookup_order(order_id: str) -> dict:
-    """Look up an order using its order ID, such as ORD-1001.
+    """Look up an order belonging to the authenticated customer.
 
-    Use this tool when the user asks about an order's status,
+    Use this tool when the user asks about their order status,
     tracking number, total amount, or order date.
     """
-    order = get_order_by_order_id(order_id)
+
+    customer_id = get_current_customer_id()
+
+    if customer_id is None:
+        return {
+            "error": "Authentication is required to access order information."
+        }
+
+    order = get_order_for_customer(
+        order_id=order_id,
+        customer_id=customer_id,
+    )
 
     if order is None:
         return {
-            "error": f"Order {order_id} was not found."
+            "error": (
+                "Order not found or you are not authorized "
+                "to access this order."
+            )
         }
 
     return order
 
-
 @tool
-def lookup_customer(customer_id: str) -> dict:
-    """Look up a customer using a customer ID, such as CUST-001.
+def lookup_customer() -> dict:
+    """Look up the authenticated customer's account information.
 
-    Use this tool when customer account information is required.
+    Use this tool when the user asks about their own customer
+    account, profile, email, phone, or customer information.
     """
+
+    customer_id = get_current_customer_id()
+
+    if customer_id is None:
+        return {
+            "error": "Authentication is required to access customer information."
+        }
+
     customer = get_customer_by_customer_id(customer_id)
 
     if customer is None:
         return {
-            "error": f"Customer {customer_id} was not found."
+            "error": "Customer account was not found."
         }
 
     return customer
@@ -60,31 +86,52 @@ def lookup_product(product_id: str) -> dict:
 
 
 @tool
-def lookup_customer_tickets(customer_id: str) -> list[dict]:
-    """Look up support tickets belonging to a customer.
+def lookup_customer_tickets() -> list[dict] | dict:
+    """Look up support tickets belonging to the authenticated customer.
 
-    Use this tool when the user asks about support requests,
-    ticket status, ticket priority, or existing issues.
+    Use this tool when the user asks about their own support tickets,
+    ticket statuses, priorities, or previously reported issues.
     """
+
+    customer_id = get_current_customer_id()
+
+    if customer_id is None:
+        return {
+            "error": "Authentication is required to access support tickets."
+        }
+
     return get_tickets_by_customer_id(customer_id)
 
 
 @tool
 def create_ticket(
-    customer_id: str,
     subject: str,
     description: str,
     priority: str = "medium",
 ) -> dict:
-    """Create a new customer support ticket.
+    """Create a support ticket for the authenticated customer.
 
     Use this tool only when the user explicitly asks to create,
-    open, or raise a support ticket.
+    open, raise, or submit a support ticket.
+
+    Derive the subject and description from the conversation when
+    enough information is already available.
 
     Valid priorities are low, medium, and high.
     """
 
-    allowed_priorities = {"low", "medium", "high"}
+    customer_id = get_current_customer_id()
+
+    if customer_id is None:
+        return {
+            "error": "Authentication is required to create a support ticket."
+        }
+
+    allowed_priorities = {
+        "low",
+        "medium",
+        "high",
+    }
 
     priority = priority.lower()
 
@@ -105,7 +152,7 @@ def create_ticket(
 
     if result is None:
         return {
-            "error": f"Customer {customer_id} was not found."
+            "error": "Authenticated customer account was not found."
         }
 
     return result

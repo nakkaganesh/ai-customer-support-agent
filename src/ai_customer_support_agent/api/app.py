@@ -1,10 +1,18 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 
 from ai_customer_support_agent.agents.support_agent import agent
 from ai_customer_support_agent.api.schemas import (
     ChatRequest,
     ChatResponse,
 )
+
+from ai_customer_support_agent.api.auth import get_authenticated_customer
+
+from ai_customer_support_agent.core.context import (
+    reset_current_customer_id,
+    set_current_customer_id,
+)
+
 
 
 app = FastAPI(
@@ -29,7 +37,12 @@ def health_check():
     "/chat",
     response_model=ChatResponse,
 )
-def chat(request: ChatRequest):
+def chat(
+    request: ChatRequest,
+    customer_id: str = Depends(get_authenticated_customer),
+):
+    token = set_current_customer_id(customer_id)
+
     try:
         config = {
             "configurable": {
@@ -63,3 +76,6 @@ def chat(request: ChatRequest):
             status_code=500,
             detail="Unable to process the request.",
         ) from exc
+
+    finally:
+        reset_current_customer_id(token)

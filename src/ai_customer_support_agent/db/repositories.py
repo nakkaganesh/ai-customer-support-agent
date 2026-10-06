@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 
 from ai_customer_support_agent.db.database import SessionLocal
@@ -8,32 +8,6 @@ from ai_customer_support_agent.db.models import (
     Product,
     SupportTicket,
 )
-
-
-def get_order_by_order_id(order_id: str) -> dict | None:
-    with SessionLocal() as session:
-        statement = (
-            select(Order)
-            .where(Order.order_id == order_id)
-            .options(
-                selectinload(Order.customer),
-                selectinload(Order.items),
-            )
-        )
-
-        order = session.scalar(statement)
-
-        if order is None:
-            return None
-
-        return {
-            "order_id": order.order_id,
-            "customer": order.customer.name,
-            "status": order.status,
-            "tracking_number": order.tracking_number,
-            "total_amount": float(order.total_amount),
-            "ordered_at": order.ordered_at.isoformat(),
-        }
 
 
 def get_customer_by_customer_id(customer_id: str) -> dict | None:
@@ -120,11 +94,9 @@ def create_support_ticket(
         if customer is None:
             return None
 
-        ticket_count = len(
-            session.scalars(
-                select(SupportTicket)
-            ).all()
-        )
+        ticket_count = session.scalar(
+    select(func.count(SupportTicket.id))
+)
 
         ticket_id = f"TKT-{ticket_count + 1:03d}"
 
@@ -163,8 +135,8 @@ def get_order_for_customer(
                 Customer.customer_id == customer_id,
             )
             .options(
-                selectinload(Order.customer),
-                selectinload(Order.items),
+    selectinload(Order.customer)
+
             )
         )
 

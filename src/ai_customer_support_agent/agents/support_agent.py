@@ -86,33 +86,3 @@ agent=create_agent(
     system_prompt=SYSTEM_PROMPT,
     checkpointer=checkpointer
 )
-
-if __name__ == "__main__":
-
-    result = agent.invoke(
-        {
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "Order ORD-1002 was delivered and I want to return it.Check my order and tell me what the company's return policy says..",
-                }
-            ]
-        }
-    )
-
-    print("\n--- AGENT MESSAGE HISTORY ---")
-
-    for message in result["messages"]:
-        print(
-            type(message).__name__,
-            ":",
-            message.content,
-        )
-
-        if hasattr(message, "tool_calls") and message.tool_calls:
-            print("Tool calls:", message.tool_calls)
-
-    print("-----------------------------")
-
-    print("\nFINAL ANSWER:")
-    print(result["messages"][-1].content)

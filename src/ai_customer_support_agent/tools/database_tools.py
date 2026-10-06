@@ -2,7 +2,6 @@ from langchain_core.tools import tool
 
 from ai_customer_support_agent.db.repositories import (
     get_customer_by_customer_id,
-    get_order_by_order_id,
     get_product_by_product_id,
     get_tickets_by_customer_id,
     create_support_ticket,get_order_for_customer

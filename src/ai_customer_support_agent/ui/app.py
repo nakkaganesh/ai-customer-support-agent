@@ -1,9 +1,15 @@
-import streamlit as st
-import requests
+import os
 import uuid
 
+import requests
+import streamlit as st
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
 API_URL = "http://127.0.0.1:8000/chat"
-API_KEY = "dev-key-customer-002"
+API_KEY = os.getenv("CUSTOMER_002_API_KEY")
 
 
 

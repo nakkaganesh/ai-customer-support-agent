@@ -1,2 +1,1 @@
-def main():
-    print("AI Customer Support Agent")
+"""AI Customer Support Agent package."""

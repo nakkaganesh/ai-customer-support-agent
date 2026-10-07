@@ -95,8 +95,8 @@ def create_support_ticket(
             return None
 
         ticket_count = session.scalar(
-    select(func.count(SupportTicket.id))
-)
+            select(func.count(SupportTicket.id))
+            )
 
         ticket_id = f"TKT-{ticket_count + 1:03d}"
 
@@ -135,7 +135,7 @@ def get_order_for_customer(
                 Customer.customer_id == customer_id,
             )
             .options(
-    selectinload(Order.customer)
+                selectinload(Order.customer)
 
             )
         )
